@@ -1,0 +1,29 @@
+#video_div {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+#player {
+    margin: 0 auto;
+    display: block;
+}
+
+.video {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin: 10px 0;
+
+}
+
+.titleDiv {
+    margin-left: 15px;
+}
+
+.videos-row .card {
+    height: 30vh;
+}
+
