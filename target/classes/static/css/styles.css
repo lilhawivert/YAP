@@ -1,29 +1,33 @@
-#video_div {
+.logo {
+    width: 200px;
+    height: auto;
+    /* margin-top: 0.5rem; */
+}
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-container {
+    margin-left: 0.5rem;
+    margin-top: 0.5rem;
+    margin-right: auto;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+}
+
+.user-info-container {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
+    align-items: center;
+    margin-top: 0.5rem;
+    margin-right: 0.5rem;
 }
 
-#player {
-    margin: 0 auto;
-    display: block;
+.user-info {
+    margin-bottom: 5px;
 }
-
-.video {
-    display: flex;
-    flex-direction: row-reverse;
-    align-items: flex-start;
-    justify-content: flex-start;
-    margin: 10px 0;
-
-}
-
-.titleDiv {
-    margin-left: 15px;
-}
-
-.videos-row .card {
-    height: 30vh;
-}
-
