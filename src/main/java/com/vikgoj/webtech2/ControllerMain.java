@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vikgoj.webtech2.Entities.User;
 import com.vikgoj.webtech2.Entities.Yap;
 import com.vikgoj.webtech2.Exceptions.LoginException;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
@@ -59,9 +61,17 @@ public class ControllerMain {
 
     @PostMapping("/yap")
     public ResponseEntity postYap(@RequestBody Yap yap) {
-        this.yapRepository.save(yap);
+        yapRepository.save(yap);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @GetMapping("/yap")
+    public List<Yap> getYaps() {
+        List<Yap> yaps = yapRepository.findAll();
+        Collections.reverse(yaps);
+        return yaps.subList(0, 10);
+    }
+    
     
 
 }
