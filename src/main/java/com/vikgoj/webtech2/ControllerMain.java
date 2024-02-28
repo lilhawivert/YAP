@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -72,6 +73,13 @@ public class ControllerMain {
         return yaps.subList(0, 10);
     }
     
+    @GetMapping("/yap/{id}")
+    public Yap getMethodName(@PathVariable String id) {
+        Yap yap = yapRepository.findById(Long.parseLong(id)).get();
+        return yap;
+        // return null;
+        // return yapRepository.getReferenceById(Long.parseLong(id));
+    }
     
 
 }
