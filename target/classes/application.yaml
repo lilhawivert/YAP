@@ -3,14 +3,8 @@ spring:
         hibernate:
             ddl-auto: update
     datasource:
-        url: 
-        username: 
-        password: 
-oauth:
-    apiKey: 
-    clientId: 
-    clientSecret: 
-    redirectURI: http://localhost:8080/login/oauth2/code/google
-    scope: https://www.googleapis.com/auth/youtube.force-ssl
+        url: jdbc:mysql://root:db2C1-GaA2HFhE5A3d6H4Gh16H6FFGb6@roundhouse.proxy.rlwy.net:41011/railway
+        username: root
+        password: db2C1-GaA2HFhE5A3d6H4Gh16H6FFGb6
 
 

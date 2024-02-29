@@ -33,22 +33,6 @@ public class ControllerMain {
     @Autowired
     private CommentRepository commentRepository;
     
-    @GetMapping("/room")
-    public String createRoom(Model model) {
-        String id = UUID.randomUUID().toString();
-        model.addAttribute("roomId", id);
-        // model.addAttribute("username", getUser().getUsername());
-        return "room"; 
-    }
-
-    @PostMapping("/room")
-    public String joinRoom(@RequestBody String id, Model model) {
-        model.addAttribute("roomId", id.substring(3, id.length()));
-        // model.addAttribute("username", getUser().getUsername());
-        return "room"; 
-    }
-
-
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
         Optional<User> userFromRepo = userRepository.findById(user.getUsername());
