@@ -11,7 +11,7 @@ import java.util.List;
 
 
 public interface LikeRepository extends JpaRepository<Like, Long> {
-    public boolean existsByUserThatLiked(String userThatLiked);
+    public boolean existsByUserThatLikedAndYapId(String userThatLiked, Long yapId);
 
     @Transactional
     public void deleteByUserThatLikedAndYapId(String userThatLiked, Long id);

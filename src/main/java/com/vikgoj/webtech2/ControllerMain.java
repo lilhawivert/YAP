@@ -74,7 +74,7 @@ public class ControllerMain {
     @PostMapping("/yap/{id}")
     public Yap getYap(@PathVariable String id, @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
-        yap.setLiked(likeRepository.existsByUserThatLiked(username));
+        yap.setLiked(likeRepository.existsByUserThatLikedAndYapId(username, Long.parseLong(id)));
         return yap;
     }
 
@@ -95,8 +95,7 @@ public class ControllerMain {
     @PostMapping("/yap/{id}/like")
     public ResponseEntity likeYap(@PathVariable String id, @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
-        boolean liked = likeRepository.existsByUserThatLiked(username);
-        System.out.println(liked);
+        boolean liked = likeRepository.existsByUserThatLikedAndYapId(username, Long.parseLong(id));
         if(liked) { 
             yap.setLikes(yap.getLikes()-1);
             likeRepository.deleteByUserThatLikedAndYapId(username, yap.getId());
