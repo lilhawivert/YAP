@@ -23,7 +23,9 @@ public class Yap {
     @Column
     private String message;
     @Column
-    private Integer likes;
+    private Integer likes = 0;
+    @Column
+    private Boolean liked;
     @OneToMany
     @JsonManagedReference
     private List<Comment> comments;
@@ -64,6 +66,12 @@ public class Yap {
     }
     public void setComments(List<Comment> comments) {
         this.comments = comments;
+    }
+    public Boolean getLiked() {
+        return liked;
+    }
+    public void setLiked(Boolean liked) {
+        this.liked = liked;
     }
 
     

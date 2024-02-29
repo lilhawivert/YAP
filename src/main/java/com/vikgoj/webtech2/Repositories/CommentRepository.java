@@ -1,4 +1,4 @@
-package com.vikgoj.webtech2;
+package com.vikgoj.webtech2.Repositories;
 
 import java.util.List;
 

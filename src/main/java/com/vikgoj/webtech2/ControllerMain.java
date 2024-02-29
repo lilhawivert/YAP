@@ -14,9 +14,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vikgoj.webtech2.Entities.Comment;
+import com.vikgoj.webtech2.Entities.Like;
 import com.vikgoj.webtech2.Entities.User;
 import com.vikgoj.webtech2.Entities.Yap;
 import com.vikgoj.webtech2.Exceptions.LoginException;
+import com.vikgoj.webtech2.Repositories.CommentRepository;
+import com.vikgoj.webtech2.Repositories.LikeRepository;
+import com.vikgoj.webtech2.Repositories.UserRepository;
+import com.vikgoj.webtech2.Repositories.YapRepository;
+
 import org.springframework.web.bind.annotation.RequestParam;
 
 
@@ -32,6 +38,9 @@ public class ControllerMain {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private LikeRepository likeRepository;
     
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
@@ -50,9 +59,9 @@ public class ControllerMain {
     }
 
     @PostMapping("/yap")
-    public ResponseEntity postYap(@RequestBody Yap yap) {
-        yapRepository.save(yap);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public String postYap(@RequestBody Yap yap) {
+        Yap saved = yapRepository.save(yap);
+        return String.valueOf(saved.getId());
     }
 
     @GetMapping("/yap")
@@ -62,9 +71,10 @@ public class ControllerMain {
         return yaps.subList(0, Math.min(10, yaps.size()));
     }
     
-    @GetMapping("/yap/{id}")
-    public Yap getYap(@PathVariable String id) {
+    @PostMapping("/yap/{id}")
+    public Yap getYap(@PathVariable String id, @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
+        yap.setLiked(likeRepository.existsByUserThatLiked(username));
         return yap;
     }
 
@@ -80,6 +90,23 @@ public class ControllerMain {
     @GetMapping("/yap/{id}/comment")
     public List<Comment> getYapComments(@PathVariable String id) {
         return commentRepository.findAllByYap(yapRepository.findById(Long.parseLong(id)).get());
+    }
+
+    @PostMapping("/yap/{id}/like")
+    public ResponseEntity likeYap(@PathVariable String id, @RequestBody String username) {
+        Yap yap = yapRepository.findById(Long.parseLong(id)).get();
+        boolean liked = likeRepository.existsByUserThatLiked(username);
+        System.out.println(liked);
+        if(liked) { 
+            yap.setLikes(yap.getLikes()-1);
+            likeRepository.deleteByUserThatLikedAndYapId(username, yap.getId());
+        }
+        else if(!liked) { 
+            yap.setLikes(yap.getLikes()+1);
+            likeRepository.save(new Like(yap.getId(), username));
+        }
+        yapRepository.save(yap);
+        return new ResponseEntity<>(HttpStatus.OK); 
     }
     
 
