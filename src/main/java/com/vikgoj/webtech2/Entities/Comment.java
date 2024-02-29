@@ -2,19 +2,20 @@ package com.vikgoj.webtech2.Entities;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "yaps")
-public class Yap {
+@Table(name = "comments")
+public class Comment {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
@@ -24,10 +25,9 @@ public class Yap {
     private String message;
     @Column
     private Integer likes;
-    @OneToMany
-    @JsonManagedReference
-    private List<Comment> comments;
-    
+    @ManyToOne
+    @JsonBackReference
+    private Yap yap;
     public Long getId() {
         return id;
     }
@@ -46,25 +46,25 @@ public class Yap {
     public void setMessage(String message) {
         this.message = message;
     }
-    public Yap() {
-    }
-    public Yap(Long id, String username, String message) {
-        this.id = id;
-        this.username = username;
-        this.message = message;
-    }
     public Integer getLikes() {
         return likes;
     }
     public void setLikes(Integer likes) {
         this.likes = likes;
     }
-    public List<Comment> getComments() {
-        return comments;
+    public Yap getYap() {
+        return yap;
     }
-    public void setComments(List<Comment> comments) {
-        this.comments = comments;
+    public void setYap(Yap yap) {
+        this.yap = yap;
     }
-
-    
+    public Comment(Long id, String username, String message, Integer likes, Yap yap) {
+        this.id = id;
+        this.username = username;
+        this.message = message;
+        this.likes = likes;
+        this.yap = yap;
+    }
+    public Comment() {
+    }
 }
