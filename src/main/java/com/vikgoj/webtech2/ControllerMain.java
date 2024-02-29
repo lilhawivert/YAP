@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.vikgoj.webtech2.Entities.Comment;
 import com.vikgoj.webtech2.Entities.User;
 import com.vikgoj.webtech2.Entities.Yap;
 import com.vikgoj.webtech2.Exceptions.LoginException;
@@ -27,6 +29,9 @@ public class ControllerMain {
 
     @Autowired
     private YapRepository yapRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
     
     @GetMapping("/room")
     public String createRoom(Model model) {
@@ -74,11 +79,23 @@ public class ControllerMain {
     }
     
     @GetMapping("/yap/{id}")
-    public Yap getMethodName(@PathVariable String id) {
+    public Yap getYap(@PathVariable String id) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         return yap;
-        // return null;
-        // return yapRepository.getReferenceById(Long.parseLong(id));
+    }
+
+    @PostMapping("/yap/{id}/comment")
+    public ResponseEntity postComment(@PathVariable String id, @RequestBody Comment comment) {
+        Yap yap = yapRepository.findById(Long.parseLong(id)).get();
+        yap.getComments().add(comment);
+        commentRepository.save(comment);
+        yapRepository.save(yap);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/yap/{id}/comment")
+    public List<Comment> getYapComments(@PathVariable String id) {
+        return commentRepository.findAllByYap(yapRepository.findById(Long.parseLong(id)).get());
     }
     
 
