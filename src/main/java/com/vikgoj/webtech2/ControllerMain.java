@@ -75,7 +75,7 @@ public class ControllerMain {
     public List<Yap> getYaps() {
         List<Yap> yaps = yapRepository.findAll();
         Collections.reverse(yaps);
-        return yaps.subList(0, 10);
+        return yaps.subList(0, Math.min(10, yaps.size()));
     }
     
     @GetMapping("/yap/{id}")
