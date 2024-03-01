@@ -88,12 +88,13 @@ public class ControllerMain {
     }
 
     @PostMapping("/yap/{id}/comment")
-    public ResponseEntity postComment(@PathVariable String id, @RequestBody Comment comment) {
+    public Long postComment(@PathVariable String id, @RequestBody Comment comment) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         yap.getComments().add(comment);
-        commentRepository.save(comment);
+        Long ret = commentRepository.save(comment).getId();
         yapRepository.save(yap);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ret;
+        // return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/yap/{id}/comment")
