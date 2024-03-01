@@ -24,7 +24,11 @@ public class Comment {
     @Column
     private String message;
     @Column
-    private Integer likes;
+    private Integer likes = 0;
+    @Column
+    private Boolean deleted;
+    @Column
+    private Boolean liked;
     @ManyToOne
     @JsonBackReference
     private Yap yap;
@@ -43,8 +47,20 @@ public class Comment {
     public String getMessage() {
         return message;
     }
+    public Boolean getDeleted() {
+        return deleted;
+    }
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
     public void setMessage(String message) {
         this.message = message;
+    }
+    public Boolean getLiked() {
+        return liked;
+    }
+    public void setLiked(Boolean liked) {
+        this.liked = liked;
     }
     public Integer getLikes() {
         return likes;

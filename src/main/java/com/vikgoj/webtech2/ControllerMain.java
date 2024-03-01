@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vikgoj.webtech2.Entities.Comment;
+import com.vikgoj.webtech2.Entities.CommentLike;
 import com.vikgoj.webtech2.Entities.Like;
 import com.vikgoj.webtech2.Entities.User;
 import com.vikgoj.webtech2.Entities.Yap;
 import com.vikgoj.webtech2.Exceptions.LoginException;
+import com.vikgoj.webtech2.Repositories.CommentLikeRepository;
 import com.vikgoj.webtech2.Repositories.CommentRepository;
 import com.vikgoj.webtech2.Repositories.LikeRepository;
 import com.vikgoj.webtech2.Repositories.UserRepository;
@@ -42,6 +44,9 @@ public class ControllerMain {
 
     @Autowired
     private LikeRepository likeRepository;
+    
+    @Autowired
+    private CommentLikeRepository commentLikeRepository;
     
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
@@ -76,6 +81,9 @@ public class ControllerMain {
     public Yap getYap(@PathVariable String id, @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         yap.setLiked(likeRepository.existsByUserThatLikedAndYapId(username, Long.parseLong(id)));
+        yap.getComments().stream().filter(comment -> commentLikeRepository.existsByUserThatLikedAndCommentId(username, comment.getId())).forEach(comment -> {
+            comment.setLiked(true);
+        });
         return yap;
     }
 
@@ -109,14 +117,34 @@ public class ControllerMain {
         return new ResponseEntity<>(HttpStatus.OK); 
     }
 
+    @PostMapping("/yap/{id}/comment/{commentId}")
+    public ResponseEntity likeComment(@PathVariable String id, @PathVariable String commentId, @RequestBody String username) {
+        Yap yap = yapRepository.findById(Long.parseLong(id)).get();
+        Comment comment = commentRepository.findByYapAndId(yap, Long.parseLong(commentId));
+        boolean liked = commentLikeRepository.existsByUserThatLikedAndCommentId(username, Long.parseLong(commentId));
+        if(liked) { 
+            comment.setLikes(comment.getLikes()-1);
+            commentLikeRepository.deleteByUserThatLikedAndCommentId(username, Long.parseLong(commentId));
+        }
+        else if(!liked) { 
+            comment.setLikes(comment.getLikes()+1);
+            commentLikeRepository.save(new CommentLike(Long.parseLong(commentId), username));
+        }
+        // yapRepository.save(yap);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+    
     @DeleteMapping("/yap/{id}/comment/{commentId}")
     public ResponseEntity deleteComment(@PathVariable String id, @PathVariable String commentId) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         Comment comment = commentRepository.findByYapAndId(yap, Long.parseLong(commentId));
         comment.setMessage("[deleted]");
+        comment.setDeleted(true);
         commentRepository.save(comment);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    
     
 
 }
