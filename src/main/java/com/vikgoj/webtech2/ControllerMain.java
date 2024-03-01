@@ -153,6 +153,10 @@ public class ControllerMain {
         return new ResponseEntity<>(HttpStatus.OK);
     }
     
+    @GetMapping("/yaps/{username}")
+    public List<Yap> getYapsForUsername(@PathVariable String username) {
+       return yapRepository.findAllByUsername(username);
+    }
     
 
 }
