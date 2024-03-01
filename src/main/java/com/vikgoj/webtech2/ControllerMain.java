@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -106,6 +107,15 @@ public class ControllerMain {
         }
         yapRepository.save(yap);
         return new ResponseEntity<>(HttpStatus.OK); 
+    }
+
+    @DeleteMapping("/yap/{id}/comment/{commentId}")
+    public ResponseEntity deleteComment(@PathVariable String id, @PathVariable String commentId) {
+        Yap yap = yapRepository.findById(Long.parseLong(id)).get();
+        Comment comment = commentRepository.findByYapAndId(yap, Long.parseLong(commentId));
+        comment.setMessage("[deleted]");
+        commentRepository.save(comment);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
     
 
