@@ -16,12 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.vikgoj.webtech2.Entities.Comment;
 import com.vikgoj.webtech2.Entities.CommentLike;
+import com.vikgoj.webtech2.Entities.Follow;
 import com.vikgoj.webtech2.Entities.Like;
 import com.vikgoj.webtech2.Entities.User;
 import com.vikgoj.webtech2.Entities.Yap;
 import com.vikgoj.webtech2.Exceptions.LoginException;
 import com.vikgoj.webtech2.Repositories.CommentLikeRepository;
 import com.vikgoj.webtech2.Repositories.CommentRepository;
+import com.vikgoj.webtech2.Repositories.FollowsRepository;
 import com.vikgoj.webtech2.Repositories.LikeRepository;
 import com.vikgoj.webtech2.Repositories.UserRepository;
 import com.vikgoj.webtech2.Repositories.YapRepository;
@@ -47,6 +49,9 @@ public class ControllerMain {
     
     @Autowired
     private CommentLikeRepository commentLikeRepository;
+    
+    @Autowired
+    private FollowsRepository followsRepository;
     
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
@@ -156,6 +161,23 @@ public class ControllerMain {
     @GetMapping("/yaps/{username}")
     public List<Yap> getYapsForUsername(@PathVariable String username) {
        return yapRepository.findAllByUsername(username);
+    }
+
+    @GetMapping("/{userWhosFollowed}/follow")
+    public Boolean getYapsForUsername(@PathVariable String userWhosFollowed, @RequestParam String userWhoFollows) {
+       return followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
+    }
+
+    @PostMapping("/{userWhosFollowed}/follow")
+    public Boolean follow(@PathVariable String userWhosFollowed, @RequestBody String userWhoFollows) {
+        if(followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows)) {
+            followsRepository.deleteByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
+            return false;
+        }
+        else {  
+            followsRepository.save(new Follow(userWhosFollowed, userWhoFollows));
+            return true;
+        }
     }
     
 
