@@ -144,6 +144,13 @@ public class ControllerMain {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @DeleteMapping("/yap/{id}")
+    public ResponseEntity deleteYap(@PathVariable String id) {
+        Yap yap = yapRepository.findById(Long.parseLong(id)).get();
+        commentRepository.deleteAllByYap(yap);
+        yapRepository.deleteById(Long.parseLong(id));
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
     
     
 

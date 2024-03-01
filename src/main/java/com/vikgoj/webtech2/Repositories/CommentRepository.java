@@ -12,4 +12,6 @@ import jakarta.transaction.Transactional;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findAllByYap(Yap yap);
     Comment findByYapAndId(Yap yap, Long id);
+    @Transactional
+    void deleteAllByYap(Yap yap);
 }
