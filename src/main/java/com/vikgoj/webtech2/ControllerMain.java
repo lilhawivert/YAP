@@ -1,6 +1,7 @@
 package com.vikgoj.webtech2;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -75,9 +76,14 @@ public class ControllerMain {
         return String.valueOf(saved.getId());
     }
 
-    @GetMapping("/yap")
-    public List<Yap> getYaps() {
-        List<Yap> yaps = yapRepository.findAll();
+    @PostMapping("/yaps")
+    public List<Yap> getYaps(@RequestBody String username) {
+        List<String> followedUsernames = followsRepository.findAllByUserWhoFollows(username).stream().map(follow -> follow.getUserWhosFollowed()).toList();
+        List<Yap> yaps = new ArrayList<Yap>(); 
+        followedUsernames.forEach(followedUsername -> {
+            yaps.addAll(yapRepository.findAllByUsername(followedUsername));
+        });
+        yaps.addAll(yapRepository.findAllByUsername(username));
         Collections.reverse(yaps);
         return yaps.subList(0, Math.min(10, yaps.size()));
     }
