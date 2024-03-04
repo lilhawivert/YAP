@@ -2,6 +2,7 @@ package com.vikgoj.webtech2;
 
 import java.sql.SQLOutput;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,12 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.vikgoj.webtech2.Entities.Comment;
 import com.vikgoj.webtech2.Entities.CommentLike;
+import com.vikgoj.webtech2.Entities.Follow;
 import com.vikgoj.webtech2.Entities.Like;
 import com.vikgoj.webtech2.Entities.User;
 import com.vikgoj.webtech2.Entities.Yap;
 import com.vikgoj.webtech2.Exceptions.LoginException;
 import com.vikgoj.webtech2.Repositories.CommentLikeRepository;
 import com.vikgoj.webtech2.Repositories.CommentRepository;
+import com.vikgoj.webtech2.Repositories.FollowsRepository;
 import com.vikgoj.webtech2.Repositories.LikeRepository;
 import com.vikgoj.webtech2.Repositories.UserRepository;
 import com.vikgoj.webtech2.Repositories.YapRepository;
@@ -50,6 +53,9 @@ public class ControllerMain {
     @Autowired
     private CommentLikeRepository commentLikeRepository;
     
+    @Autowired
+    private FollowsRepository followsRepository;
+
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
         Optional<User> userFromRepo = userRepository.findById(user.getUsername());
@@ -72,9 +78,14 @@ public class ControllerMain {
         return String.valueOf(saved.getId());
     }
 
-    @GetMapping("/yap")
-    public List<Yap> getYaps() {
-        List<Yap> yaps = yapRepository.findAll();
+    @PostMapping("/yaps")
+    public List<Yap> getYaps(@RequestBody String username) {
+        List<String> followedUsernames = followsRepository.findAllByUserWhoFollows(username).stream().map(follow -> follow.getUserWhosFollowed()).toList();
+        List<Yap> yaps = new ArrayList<Yap>();
+        followedUsernames.forEach(followedUsername -> {
+            yaps.addAll(yapRepository.findAllByUsername(followedUsername));
+        });
+        yaps.addAll(yapRepository.findAllByUsername(username));
         Collections.reverse(yaps);
         return yaps.subList(0, Math.min(10, yaps.size()));
     }
@@ -90,12 +101,13 @@ public class ControllerMain {
     }
 
     @PostMapping("/yap/{id}/comment")
-    public ResponseEntity postComment(@PathVariable String id, @RequestBody Comment comment) {
+    public Long postComment(@PathVariable String id, @RequestBody Comment comment) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         yap.getComments().add(comment);
-        commentRepository.save(comment);
+        Long ret = commentRepository.save(comment).getId();
         yapRepository.save(yap);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ret;
+        // return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/yap/{id}/comment")
@@ -190,5 +202,35 @@ public class ControllerMain {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @DeleteMapping("/yap/{id}")
+    public ResponseEntity deleteYap(@PathVariable String id) {
+        Yap yap = yapRepository.findById(Long.parseLong(id)).get();
+        commentRepository.deleteAllByYap(yap);
+        yapRepository.deleteById(Long.parseLong(id));
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/yaps/{username}")
+    public List<Yap> getYapsForUsername(@PathVariable String username) {
+       return yapRepository.findAllByUsername(username);
+    }
+
+    @GetMapping("/{userWhosFollowed}/follow")
+    public Boolean getYapsForUsername(@PathVariable String userWhosFollowed, @RequestParam String userWhoFollows) {
+       return followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
+    }
+
+    @PostMapping("/{userWhosFollowed}/follow")
+    public Boolean follow(@PathVariable String userWhosFollowed, @RequestBody String userWhoFollows) {
+        if(followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows)) {
+            followsRepository.deleteByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
+            return false;
+        }
+        else {
+            followsRepository.save(new Follow(userWhosFollowed, userWhoFollows));
+            return true;
+        }
+    }
+    
 
 }

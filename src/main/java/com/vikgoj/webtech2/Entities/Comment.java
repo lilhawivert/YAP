@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,7 +30,7 @@ public class Comment {
     private Boolean deleted;
     @Column
     private Boolean liked;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JsonBackReference
     private Yap yap;
     public Long getId() {
