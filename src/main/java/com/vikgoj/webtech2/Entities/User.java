@@ -1,9 +1,6 @@
 package com.vikgoj.webtech2.Entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
@@ -12,10 +9,13 @@ public class User {
     private String username;
     @Column
     private String password;
+    @Column(length = 64000)
+    private String profilePics;
     
-    public User(String username, String password) {
+    public User(String username, String password, String profilePic) {
         this.username = username;
         this.password = password;
+        this.profilePics = profilePic;
     }
 
     public User() {}
@@ -33,5 +33,11 @@ public class User {
         this.password = password;
     }
 
+    public String getProfilePic() {
+        return profilePics;
+    }
+    public void setProfilePic(String profilePic) {
+        this.profilePics = profilePic;
+    }
     
 }

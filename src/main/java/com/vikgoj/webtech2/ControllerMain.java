@@ -1,10 +1,12 @@
 package com.vikgoj.webtech2;
 
+import java.sql.SQLOutput;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -144,7 +146,49 @@ public class ControllerMain {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    
-    
+    @GetMapping("/userExists/{userName}")
+    public Boolean getUserExists(@PathVariable String userName) {
+        System.out.println("getting user exists");
+        return userRepository.existsByUsername(userName);
+    }
+
+    @GetMapping("/getProfilePicture/{userName}")
+    public String getProfilePic(@PathVariable String userName) {
+        System.out.println("getting Profile Pic");
+        return userRepository.findByUsername(userName).getProfilePic();
+    }
+
+    @PostMapping("/changeProfilePicture/{userName}")
+    public ResponseEntity changeProfilePicture(@PathVariable String userName, @RequestBody String newPicture){
+        System.out.println("changing Profile Pic "+newPicture);
+        User user = userRepository.findByUsername(userName);
+        user.setProfilePic(newPicture);
+        userRepository.save(user);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Transactional
+    @PostMapping("/changeUserName/{userName}")
+    public ResponseEntity changeUserName(@PathVariable String userName, @RequestBody String newUsername){
+        System.out.println("changing username");
+        User user = userRepository.findByUsername(userName);
+        userRepository.deleteByUsername(userName);
+        User newUser = new User();
+        newUser.setUsername(newUsername);
+        newUser.setPassword(user.getPassword());
+        newUser.setProfilePic(user.getProfilePic());
+        userRepository.save(newUser);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/changePassword/{userName}")
+    public ResponseEntity changePassword(@PathVariable String userName, @RequestBody String newPassword){
+        System.out.println("changing Password");
+        User user = userRepository.findByUsername(userName);
+        user.setPassword(newPassword);
+        userRepository.save(user);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
 
 }
