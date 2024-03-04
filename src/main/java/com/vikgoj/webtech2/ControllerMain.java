@@ -1,12 +1,13 @@
 package com.vikgoj.webtech2;
 
+
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
+import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vikgoj.webtech2.helper;
 import com.vikgoj.webtech2.Entities.Comment;
 import com.vikgoj.webtech2.Entities.CommentLike;
 import com.vikgoj.webtech2.Entities.Follow;
@@ -53,17 +55,18 @@ public class ControllerMain {
     
     @Autowired
     private FollowsRepository followsRepository;
-    
+
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
         Optional<User> userFromRepo = userRepository.findById(user.getUsername());
-        if(userFromRepo.isPresent() && userFromRepo.get().getPassword().equals(user.getPassword())) return new ResponseEntity<>(HttpStatus.OK);
+        if(userFromRepo.isPresent() && userFromRepo.get().getPassword().equals(helper.encodeString(user.getPassword()))) return new ResponseEntity<>(HttpStatus.OK);
         else return new ResponseEntity<>(HttpStatus.BAD_REQUEST); 
     }
 
     @PostMapping("/register")
     public ResponseEntity postRegister(@RequestBody User user) {
         if(!userRepository.existsByUsername(user.getUsername())) {
+            user.setPassword(helper.encodeString(user.getPassword()));
             userRepository.save(user);
             return new ResponseEntity<>(HttpStatus.OK);
         }
@@ -79,7 +82,7 @@ public class ControllerMain {
     @PostMapping("/yaps")
     public List<Yap> getYaps(@RequestBody String username) {
         List<String> followedUsernames = followsRepository.findAllByUserWhoFollows(username).stream().map(follow -> follow.getUserWhosFollowed()).toList();
-        List<Yap> yaps = new ArrayList<Yap>(); 
+        List<Yap> yaps = new ArrayList<Yap>();
         followedUsernames.forEach(followedUsername -> {
             yaps.addAll(yapRepository.findAllByUsername(followedUsername));
         });
@@ -156,6 +159,50 @@ public class ControllerMain {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @GetMapping("/userExists/{userName}")
+    public Boolean getUserExists(@PathVariable String userName) {
+        System.out.println("getting user exists");
+        return userRepository.existsByUsername(userName);
+    }
+
+    @GetMapping("/getProfilePicture/{userName}")
+    public String getProfilePic(@PathVariable String userName) {
+        System.out.println("getting Profile Pic");
+        return userRepository.findByUsername(userName).getProfilePic();
+    }
+
+    @PostMapping("/changeProfilePicture/{userName}")
+    public ResponseEntity changeProfilePicture(@PathVariable String userName, @RequestBody String newPicture){
+        System.out.println("changing Profile Pic "+newPicture);
+        User user = userRepository.findByUsername(userName);
+        user.setProfilePic(newPicture);
+        userRepository.save(user);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Transactional
+    @PostMapping("/changeUserName/{userName}")
+    public ResponseEntity changeUserName(@PathVariable String userName, @RequestBody String newUsername){
+        System.out.println("changing username");
+        User user = userRepository.findByUsername(userName);
+        userRepository.deleteByUsername(userName);
+        User newUser = new User();
+        newUser.setUsername(newUsername);
+        newUser.setPassword(user.getPassword());
+        newUser.setProfilePic(user.getProfilePic());
+        userRepository.save(newUser);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/changePassword/{userName}")
+    public ResponseEntity changePassword(@PathVariable String userName, @RequestBody String newPassword){
+        System.out.println("changing Password");
+        User user = userRepository.findByUsername(userName);
+        user.setPassword(newPassword);
+        userRepository.save(user);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @DeleteMapping("/yap/{id}")
     public ResponseEntity deleteYap(@PathVariable String id) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
@@ -163,7 +210,7 @@ public class ControllerMain {
         yapRepository.deleteById(Long.parseLong(id));
         return new ResponseEntity<>(HttpStatus.OK);
     }
-    
+
     @GetMapping("/yaps/{username}")
     public List<Yap> getYapsForUsername(@PathVariable String username) {
        return yapRepository.findAllByUsername(username);
@@ -180,7 +227,7 @@ public class ControllerMain {
             followsRepository.deleteByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
             return false;
         }
-        else {  
+        else {
             followsRepository.save(new Follow(userWhosFollowed, userWhoFollows));
             return true;
         }
