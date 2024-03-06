@@ -1,7 +1,11 @@
 package com.vikgoj.webtech2;
 
+import com.vikgoj.webtech2.Entities.User;
+import com.vikgoj.webtech2.Entities.Yap;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 public class helper {
 
@@ -27,3 +31,5 @@ public class helper {
         return "";
     }
 }
+
+

@@ -3,6 +3,7 @@ package com.vikgoj.webtech2;
 
 import java.util.*;
 
+import com.vikgoj.webtech2.Entities.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vikgoj.webtech2.helper;
-import com.vikgoj.webtech2.Entities.Comment;
-import com.vikgoj.webtech2.Entities.CommentLike;
-import com.vikgoj.webtech2.Entities.Follow;
-import com.vikgoj.webtech2.Entities.Like;
-import com.vikgoj.webtech2.Entities.User;
-import com.vikgoj.webtech2.Entities.Yap;
 import com.vikgoj.webtech2.Exceptions.LoginException;
 import com.vikgoj.webtech2.Repositories.CommentLikeRepository;
 import com.vikgoj.webtech2.Repositories.CommentRepository;
@@ -58,8 +53,8 @@ public class ControllerMain {
 
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
-        Optional<User> userFromRepo = userRepository.findById(user.getUsername());
-        if(userFromRepo.isPresent() && userFromRepo.get().getPassword().equals(helper.encodeString(user.getPassword()))) return new ResponseEntity<>(HttpStatus.OK);
+        User userFromRepo = userRepository.findByUsername(user.getUsername());
+        if(userRepository.existsByUsername(userFromRepo.getUsername()) && userFromRepo.getPassword().equals(helper.encodeString(user.getPassword()))) return new ResponseEntity<>(HttpStatus.OK);
         else return new ResponseEntity<>(HttpStatus.BAD_REQUEST); 
     }
 
@@ -180,17 +175,12 @@ public class ControllerMain {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @Transactional
     @PostMapping("/changeUserName/{userName}")
     public ResponseEntity changeUserName(@PathVariable String userName, @RequestBody String newUsername){
         System.out.println("changing username");
         User user = userRepository.findByUsername(userName);
-        userRepository.deleteByUsername(userName);
-        User newUser = new User();
-        newUser.setUsername(newUsername);
-        newUser.setPassword(user.getPassword());
-        newUser.setProfilePic(user.getProfilePic());
-        userRepository.save(newUser);
+        user.setUsername(newUsername);
+        userRepository.save(user);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -231,6 +221,27 @@ public class ControllerMain {
             followsRepository.save(new Follow(userWhosFollowed, userWhoFollows));
             return true;
         }
+    }
+
+    @GetMapping("/getUser/{username}")
+    public User getUserForUsername(@PathVariable String username) {
+        User user = userRepository.findByUsername(username);
+        String pp = user.getProfilePic();
+        if(pp.length()>2)user.setProfilePic(pp.substring(1,pp.length()-1));
+        return userRepository.findByUsername(username);
+    }
+
+    @PostMapping("getUsersOfYaps")
+    public User[] getUsersOfYaps(@RequestBody Yap[] yaps) {
+        User[] users = new User[yaps.length];
+        for (int i = 0; i < users.length; i++) {
+            User u = userRepository.findByUsername(yaps[i].getUsername());
+            String pp = u.getProfilePic();
+            //if(pp.length()>2)u.setProfilePic(pp.substring(1,pp.length()-1));
+            users[i]=u;
+            System.out.println(u.getProfilePic());
+        }
+        return users;
     }
     
 
