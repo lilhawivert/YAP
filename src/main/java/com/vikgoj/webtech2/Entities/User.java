@@ -6,13 +6,17 @@ import jakarta.persistence.*;
 @Table(name = "users")
 public class User {
     @Id
+    @GeneratedValue(strategy=GenerationType.AUTO)
+    private Long id;
+    @Column
     private String username;
     @Column
     private String password;
     @Column(length = 64000)
     private String profilePics;
     
-    public User(String username, String password, String profilePic) {
+    public User(Long id,String username, String password, String profilePic) {
+        this.id = id;
         this.username = username;
         this.password = password;
         this.profilePics = profilePic;
@@ -31,6 +35,12 @@ public class User {
     }
     public void setPassword(String password) {
         this.password = password;
+    }
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getProfilePic() {

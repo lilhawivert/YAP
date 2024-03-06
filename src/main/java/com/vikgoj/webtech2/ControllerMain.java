@@ -3,6 +3,7 @@ package com.vikgoj.webtech2;
 
 import java.util.*;
 
+import com.vikgoj.webtech2.Entities.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vikgoj.webtech2.helper;
-import com.vikgoj.webtech2.Entities.Comment;
-import com.vikgoj.webtech2.Entities.CommentLike;
-import com.vikgoj.webtech2.Entities.Follow;
-import com.vikgoj.webtech2.Entities.Like;
-import com.vikgoj.webtech2.Entities.User;
-import com.vikgoj.webtech2.Entities.Yap;
 import com.vikgoj.webtech2.Exceptions.LoginException;
 import com.vikgoj.webtech2.Repositories.CommentLikeRepository;
 import com.vikgoj.webtech2.Repositories.CommentRepository;
@@ -58,8 +53,8 @@ public class ControllerMain {
 
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
-        Optional<User> userFromRepo = userRepository.findById(user.getUsername());
-        if(userFromRepo.isPresent() && userFromRepo.get().getPassword().equals(helper.encodeString(user.getPassword()))) return new ResponseEntity<>(HttpStatus.OK);
+        User userFromRepo = userRepository.findByUsername(user.getUsername());
+        if(userRepository.existsByUsername(userFromRepo.getUsername()) && userFromRepo.getPassword().equals(helper.encodeString(user.getPassword()))) return new ResponseEntity<>(HttpStatus.OK);
         else return new ResponseEntity<>(HttpStatus.BAD_REQUEST); 
     }
 
@@ -161,44 +156,29 @@ public class ControllerMain {
 
     @GetMapping("/userExists/{userName}")
     public Boolean getUserExists(@PathVariable String userName) {
-        System.out.println("getting user exists");
         return userRepository.existsByUsername(userName);
-    }
-
-    @GetMapping("/getProfilePicture/{userName}")
-    public String getProfilePic(@PathVariable String userName) {
-        System.out.println("getting Profile Pic");
-        return userRepository.findByUsername(userName).getProfilePic();
     }
 
     @PostMapping("/changeProfilePicture/{userName}")
     public ResponseEntity changeProfilePicture(@PathVariable String userName, @RequestBody String newPicture){
-        System.out.println("changing Profile Pic "+newPicture);
         User user = userRepository.findByUsername(userName);
         user.setProfilePic(newPicture);
         userRepository.save(user);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @Transactional
     @PostMapping("/changeUserName/{userName}")
     public ResponseEntity changeUserName(@PathVariable String userName, @RequestBody String newUsername){
-        System.out.println("changing username");
         User user = userRepository.findByUsername(userName);
-        userRepository.deleteByUsername(userName);
-        User newUser = new User();
-        newUser.setUsername(newUsername);
-        newUser.setPassword(user.getPassword());
-        newUser.setProfilePic(user.getProfilePic());
-        userRepository.save(newUser);
+        user.setUsername(newUsername);
+        userRepository.save(user);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PostMapping("/changePassword/{userName}")
     public ResponseEntity changePassword(@PathVariable String userName, @RequestBody String newPassword){
-        System.out.println("changing Password");
         User user = userRepository.findByUsername(userName);
-        user.setPassword(newPassword);
+        user.setPassword(helper.encodeString(newPassword));
         userRepository.save(user);
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -232,6 +212,34 @@ public class ControllerMain {
             return true;
         }
     }
-    
+
+    @GetMapping("/getUser/{username}")
+    public User getUserForUsername(@PathVariable String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    @PostMapping("getUsersOfYaps")
+    public User[] getUsersOfYaps(@RequestBody Yap[] yaps) {
+        User[] users = new User[yaps.length];
+        for (int i = 0; i < users.length; i++) {
+            users[i] = userRepository.findByUsername(yaps[i].getUsername());
+        }
+        return users;
+    }
+
+    @GetMapping("/getUserById/{userId}")
+    public User getUserById(@PathVariable String userId) {
+        return userRepository.getUserById(Long.parseLong(userId));
+    }
+
+    @GetMapping("/getUsersByUsernamePartial/{username}")
+    public List<User> getUsersByUsernamePartial(@PathVariable(required = false) String username) {
+        return userRepository.findAllByUsernameContaining(username);
+    }
+
+    @GetMapping("/getUsersByUsernamePartial/")
+    public List<User> getAllUsersByUsername() {
+        return userRepository.findAll();
+    }
 
 }

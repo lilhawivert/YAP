@@ -3,8 +3,8 @@ spring:
         hibernate:
             ddl-auto: update
     datasource:
-        url: jdbc:mysql://root:db2C1-GaA2HFhE5A3d6H4Gh16H6FFGb6@roundhouse.proxy.rlwy.net:41011/railway
+        url: jdbc:mysql://root:6D3CDABGHEF4FC56BF5-3fBH4f-ad-4e@roundhouse.proxy.rlwy.net:22802/railway
         username: root
-        password: db2C1-GaA2HFhE5A3d6H4Gh16H6FFGb6
+        password: 6D3CDABGHEF4FC56BF5-3fBH4f-ad-4e
 
 
