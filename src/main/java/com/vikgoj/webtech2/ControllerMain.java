@@ -156,19 +156,11 @@ public class ControllerMain {
 
     @GetMapping("/userExists/{userName}")
     public Boolean getUserExists(@PathVariable String userName) {
-        System.out.println("getting user exists");
         return userRepository.existsByUsername(userName);
-    }
-
-    @GetMapping("/getProfilePicture/{userName}")
-    public String getProfilePic(@PathVariable String userName) {
-        System.out.println("getting Profile Pic");
-        return userRepository.findByUsername(userName).getProfilePic();
     }
 
     @PostMapping("/changeProfilePicture/{userName}")
     public ResponseEntity changeProfilePicture(@PathVariable String userName, @RequestBody String newPicture){
-        System.out.println("changing Profile Pic "+newPicture);
         User user = userRepository.findByUsername(userName);
         user.setProfilePic(newPicture);
         userRepository.save(user);
@@ -177,7 +169,6 @@ public class ControllerMain {
 
     @PostMapping("/changeUserName/{userName}")
     public ResponseEntity changeUserName(@PathVariable String userName, @RequestBody String newUsername){
-        System.out.println("changing username");
         User user = userRepository.findByUsername(userName);
         user.setUsername(newUsername);
         userRepository.save(user);
@@ -186,9 +177,8 @@ public class ControllerMain {
 
     @PostMapping("/changePassword/{userName}")
     public ResponseEntity changePassword(@PathVariable String userName, @RequestBody String newPassword){
-        System.out.println("changing Password");
         User user = userRepository.findByUsername(userName);
-        user.setPassword(newPassword);
+        user.setPassword(helper.encodeString(newPassword));
         userRepository.save(user);
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -225,9 +215,6 @@ public class ControllerMain {
 
     @GetMapping("/getUser/{username}")
     public User getUserForUsername(@PathVariable String username) {
-        User user = userRepository.findByUsername(username);
-        String pp = user.getProfilePic();
-        if(pp.length()>2)user.setProfilePic(pp.substring(1,pp.length()-1));
         return userRepository.findByUsername(username);
     }
 
@@ -235,14 +222,24 @@ public class ControllerMain {
     public User[] getUsersOfYaps(@RequestBody Yap[] yaps) {
         User[] users = new User[yaps.length];
         for (int i = 0; i < users.length; i++) {
-            User u = userRepository.findByUsername(yaps[i].getUsername());
-            String pp = u.getProfilePic();
-            //if(pp.length()>2)u.setProfilePic(pp.substring(1,pp.length()-1));
-            users[i]=u;
-            System.out.println(u.getProfilePic());
+            users[i] = userRepository.findByUsername(yaps[i].getUsername());
         }
         return users;
     }
-    
+
+    @GetMapping("/getUserById/{userId}")
+    public User getUserById(@PathVariable String userId) {
+        return userRepository.getUserById(Long.parseLong(userId));
+    }
+
+    @GetMapping("/getUsersByUsernamePartial/{username}")
+    public List<User> getUsersByUsernamePartial(@PathVariable(required = false) String username) {
+        return userRepository.findAllByUsernameContaining(username);
+    }
+
+    @GetMapping("/getUsersByUsernamePartial/")
+    public List<User> getAllUsersByUsername() {
+        return userRepository.findAll();
+    }
 
 }
