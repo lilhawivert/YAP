@@ -5,7 +5,10 @@ import com.vikgoj.webtech2.Entities.Yap;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class helper {
 
@@ -30,6 +33,19 @@ public class helper {
         }
         return "";
     }
+
+
+    public static ArrayList<String> extractHashtags(String input) {
+        ArrayList<String> hashtags = new ArrayList<>();
+        Pattern pattern = Pattern.compile("#(\\w+?)(?=(\\s|$|#))");
+        Matcher matcher = pattern.matcher(input);
+        while (matcher.find()) {
+            hashtags.add(matcher.group(1));
+        }
+        return hashtags;
+    }
+
+
 }
 
 
