@@ -2,12 +2,12 @@ package com.vikgoj.webtech2;
 
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.vikgoj.webtech2.Entities.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.vikgoj.webtech2.helper;
 import com.vikgoj.webtech2.Exceptions.LoginException;
 import com.vikgoj.webtech2.Repositories.CommentLikeRepository;
 import com.vikgoj.webtech2.Repositories.CommentRepository;
@@ -218,7 +217,7 @@ public class ControllerMain {
         return userRepository.findByUsername(username);
     }
 
-    @PostMapping("getUsersOfYaps")
+    @PostMapping("/getUsersOfYaps")
     public User[] getUsersOfYaps(@RequestBody Yap[] yaps) {
         User[] users = new User[yaps.length];
         for (int i = 0; i < users.length; i++) {
@@ -233,7 +232,7 @@ public class ControllerMain {
     }
 
     @GetMapping("/getUsersByUsernamePartial/{username}")
-    public List<User> getUsersByUsernamePartial(@PathVariable(required = false) String username) {
+    public List<User> getUsersByUsernamePartial(@PathVariable String username) {
         return userRepository.findAllByUsernameContaining(username);
     }
 
@@ -241,5 +240,26 @@ public class ControllerMain {
     public List<User> getAllUsersByUsername() {
         return userRepository.findAll();
     }
+
+    @GetMapping("/getTrends")
+    public List<String> getTrends() {
+        System.out.println("getting trends");
+        Yap[] yaps = yapRepository.findAll().toArray(new Yap[0]); //TODO add date since when
+        ArrayList<String> ret = new ArrayList<>();
+        for (Yap yap : yaps) {
+            ret.addAll(helper.extractHashtags(yap.getMessage()));
+        }
+        return ret;
+    }
+
+    @GetMapping("/getYapsOfTrend/{trend}")
+    public List<Yap> getYapsOfTrend(@PathVariable String trend) {
+        System.out.println("getting trend yaps");
+        return yapRepository.findAll()
+                .stream()
+                .filter(yap -> yap.getMessage().contains("#" + trend))
+                .collect(Collectors.toList());
+    }
+
 
 }
