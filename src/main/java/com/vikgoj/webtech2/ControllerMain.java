@@ -50,6 +50,11 @@ public class ControllerMain {
     @Autowired
     private FollowsRepository followsRepository;
 
+    @GetMapping("/health")
+    public String getHealth() {
+        return "OK";
+    }
+
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
         User userFromRepo = userRepository.findByUsername(user.getUsername());
@@ -73,16 +78,18 @@ public class ControllerMain {
         return String.valueOf(saved.getId());
     }
 
-    @PostMapping("/yaps")
-    public List<Yap> getYaps(@RequestBody String username) {
-        List<String> followedUsernames = followsRepository.findAllByUserWhoFollows(username).stream().map(follow -> follow.getUserWhosFollowed()).toList();
+    @PostMapping("/yaps/{maxYaps}")
+    public List<Yap> getYaps(@RequestBody String username,@PathVariable String maxYaps) {
+        List<String> followedUsernames = followsRepository.findAllByUserWhoFollows(username).stream().map(Follow::getUserWhosFollowed).toList();
         List<Yap> yaps = new ArrayList<Yap>();
         followedUsernames.forEach(followedUsername -> {
             yaps.addAll(yapRepository.findAllByUsername(followedUsername));
         });
         yaps.addAll(yapRepository.findAllByUsername(username));
         Collections.reverse(yaps);
-        return yaps.subList(0, Math.min(10, yaps.size()));
+        List<Yap> ret = yaps.subList(0, Math.min(Integer.parseInt(maxYaps), yaps.size()));
+        System.out.println("t1");
+        return ret;
     }
     
     @PostMapping("/yap/{id}")
@@ -219,10 +226,16 @@ public class ControllerMain {
 
     @PostMapping("/getUsersOfYaps")
     public User[] getUsersOfYaps(@RequestBody Yap[] yaps) {
+        long startTime = System.currentTimeMillis();
+        System.out.println("s1");
         User[] users = new User[yaps.length];
         for (int i = 0; i < users.length; i++) {
             users[i] = userRepository.findByUsername(yaps[i].getUsername());
         }
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = (stopTime - startTime) ;
+        System.out.println("s2");
+        System.out.println("Vergangene Zeit: " + elapsedTime + " 2");
         return users;
     }
 
@@ -244,7 +257,7 @@ public class ControllerMain {
     @GetMapping("/getTrends")
     public List<String> getTrends() {
         System.out.println("getting trends");
-        Yap[] yaps = yapRepository.findAll().toArray(new Yap[0]); //TODO add date since when
+        Yap[] yaps = yapRepository.findAll().toArray(new Yap[0]);
         ArrayList<String> ret = new ArrayList<>();
         for (Yap yap : yaps) {
             ret.addAll(helper.extractHashtags(yap.getMessage()));
@@ -259,6 +272,14 @@ public class ControllerMain {
                 .stream()
                 .filter(yap -> yap.getMessage().contains("#" + trend))
                 .collect(Collectors.toList());
+    }
+
+    @PostMapping("/changeBgColor/{userName}")
+    public ResponseEntity changeBgColor(@PathVariable String userName, @RequestBody Long bgColor){
+        User user = userRepository.findByUsername(userName);
+        user.setBgColor(bgColor);
+        userRepository.save(user);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 

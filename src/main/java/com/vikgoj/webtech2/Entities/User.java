@@ -14,12 +14,15 @@ public class User {
     private String password;
     @Column(length = 64000)
     private String profilePics;
+    @Column
+    private Long bgColor;
     
-    public User(Long id,String username, String password, String profilePic) {
+    public User(Long id,String username, String password, String profilePic, Long bgColor) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.profilePics = profilePic;
+        this.bgColor = bgColor;
     }
 
     public User() {}
@@ -49,5 +52,12 @@ public class User {
     public void setProfilePic(String profilePic) {
         this.profilePics = profilePic;
     }
-    
+
+    public Long getBgColor() {
+        return bgColor;
+    }
+
+    public void setBgColor(Long bgColor) {
+        this.bgColor = bgColor;
+    }
 }
