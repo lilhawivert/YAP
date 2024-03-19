@@ -24,6 +24,7 @@ import com.vikgoj.webtech2.Repositories.FollowsRepository;
 import com.vikgoj.webtech2.Repositories.LikeRepository;
 import com.vikgoj.webtech2.Repositories.UserRepository;
 import com.vikgoj.webtech2.Repositories.YapRepository;
+import com.vikgoj.webtech2.Repositories.BlockRepository;
 
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -49,6 +50,10 @@ public class ControllerMain {
     
     @Autowired
     private FollowsRepository followsRepository;
+
+    @Autowired
+    private BlockRepository blockRepository;
+
 
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
@@ -211,6 +216,25 @@ public class ControllerMain {
             return true;
         }
     }
+
+    @PostMapping("/{userWhosBlocked}/block")
+    public Boolean block(@PathVariable String userWhoblocks,@RequestBody String userwhosblocked) {
+       if(blockRepository.existsByUserWhosBlockedAndUserWhoBlocks(userwhosblocked,userWhoblocks)) {
+           blockRepository.deleteByUserWhosBlockedAndUserWhoBlocks(userwhosblocked,userWhoblocks);
+
+           return false;
+       }else {
+           blockRepository.save(new Block(userwhosblocked,userWhoblocks));
+           if(followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhoblocks, userwhosblocked) && blockRepository.existsByUserWhosBlockedAndUserWhoBlocks(userWhoblocks,userwhosblocked)) {
+            followsRepository.deleteByUserWhosFollowedAndUserWhoFollows(userWhoblocks, userwhosblocked);
+           }
+           return true;
+           //unblock
+       }
+       
+      
+    }
+
 
     @GetMapping("/getUser/{username}")
     public User getUserForUsername(@PathVariable String username) {
