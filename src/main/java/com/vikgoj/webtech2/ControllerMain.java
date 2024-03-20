@@ -8,7 +8,10 @@ import com.vikgoj.webtech2.Entities.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,15 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vikgoj.webtech2.Exceptions.LoginException;
 import com.vikgoj.webtech2.Repositories.CommentLikeRepository;
 import com.vikgoj.webtech2.Repositories.CommentRepository;
+import com.vikgoj.webtech2.Repositories.DMRepository;
 import com.vikgoj.webtech2.Repositories.FollowsRepository;
 import com.vikgoj.webtech2.Repositories.LikeRepository;
 import com.vikgoj.webtech2.Repositories.UserRepository;
 import com.vikgoj.webtech2.Repositories.YapRepository;
 
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 
-@RestController
+@Controller
 @CrossOrigin(origins = "http://localhost:4200")
 public class ControllerMain {
 
@@ -49,6 +54,9 @@ public class ControllerMain {
     
     @Autowired
     private FollowsRepository followsRepository;
+    
+    @Autowired
+    private DMRepository dmRepository;
 
     @GetMapping("/health")
     public String getHealth() {
@@ -56,6 +64,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/login")
+    @ResponseBody
     public User postLogin(@RequestBody User user) throws LoginException {
         if(!userRepository.existsByUsername(user.getUsername())) throw new LoginException(); 
         User userFromRepo = userRepository.findByUsername(user.getUsername());
@@ -67,6 +76,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/register")
+    @ResponseBody
     public ResponseEntity postRegister(@RequestBody User user) {
         if(!userRepository.existsByUsername(user.getUsername())) {
             user.setPassword(helper.encodeString(user.getPassword()));
@@ -78,12 +88,14 @@ public class ControllerMain {
     }
 
     @PostMapping("/yap")
+    @ResponseBody
     public String postYap(@RequestBody Yap yap) {
         Yap saved = yapRepository.save(yap);
         return String.valueOf(saved.getId());
     }
 
     @PostMapping("/yaps/{maxYaps}")
+    @ResponseBody
     public List<Yap> getYaps(@RequestBody String username,@PathVariable String maxYaps) {
         List<String> followedUsernames = followsRepository.findAllByUserWhoFollows(username).stream().map(Follow::getUserWhosFollowed).toList();
         List<Yap> yaps = new ArrayList<Yap>();
@@ -98,6 +110,7 @@ public class ControllerMain {
     }
     
     @PostMapping("/yap/{id}")
+    @ResponseBody
     public Yap getYap(@PathVariable String id, @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         yap.setLiked(likeRepository.existsByUserThatLikedAndYapId(username, Long.parseLong(id)));
@@ -108,6 +121,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/yap/{id}/comment")
+    @ResponseBody
     public Long postComment(@PathVariable String id, @RequestBody Comment comment) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         yap.getComments().add(comment);
@@ -118,11 +132,13 @@ public class ControllerMain {
     }
 
     @GetMapping("/yap/{id}/comment")
+    @ResponseBody
     public List<Comment> getYapComments(@PathVariable String id) {
         return commentRepository.findAllByYap(yapRepository.findById(Long.parseLong(id)).get());
     }
 
     @PostMapping("/yap/{id}/like")
+    @ResponseBody
     public ResponseEntity likeYap(@PathVariable String id, @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         boolean liked = likeRepository.existsByUserThatLikedAndYapId(username, Long.parseLong(id));
@@ -139,6 +155,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/yap/{id}/comment/{commentId}")
+    @ResponseBody
     public ResponseEntity likeComment(@PathVariable String id, @PathVariable String commentId, @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         Comment comment = commentRepository.findByYapAndId(yap, Long.parseLong(commentId));
@@ -156,6 +173,7 @@ public class ControllerMain {
     }
     
     @DeleteMapping("/yap/{id}/comment/{commentId}")
+    @ResponseBody
     public ResponseEntity deleteComment(@PathVariable String id, @PathVariable String commentId) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         Comment comment = commentRepository.findByYapAndId(yap, Long.parseLong(commentId));
@@ -166,11 +184,13 @@ public class ControllerMain {
     }
 
     @GetMapping("/userExists/{userName}")
+    @ResponseBody
     public Boolean getUserExists(@PathVariable String userName) {
         return userRepository.existsByUsername(userName);
     }
 
     @PostMapping("/changeProfilePicture/{userName}")
+    @ResponseBody
     public ResponseEntity changeProfilePicture(@PathVariable String userName, @RequestBody String newPicture){
         User user = userRepository.findByUsername(userName);
         user.setProfilePic(newPicture);
@@ -179,6 +199,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/changeUserName/{userName}")
+    @ResponseBody
     public ResponseEntity changeUserName(@PathVariable String userName, @RequestBody String newUsername){
         User user = userRepository.findByUsername(userName);
         user.setUsername(newUsername);
@@ -187,6 +208,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/changePassword/{userName}")
+    @ResponseBody
     public ResponseEntity changePassword(@PathVariable String userName, @RequestBody String newPassword){
         User user = userRepository.findByUsername(userName);
         user.setPassword(helper.encodeString(newPassword));
@@ -195,6 +217,7 @@ public class ControllerMain {
     }
 
     @DeleteMapping("/yap/{id}")
+    @ResponseBody
     public ResponseEntity deleteYap(@PathVariable String id) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         commentRepository.deleteAllByYap(yap);
@@ -203,16 +226,19 @@ public class ControllerMain {
     }
 
     @GetMapping("/yaps/{username}")
+    @ResponseBody
     public List<Yap> getYapsForUsername(@PathVariable String username) {
        return yapRepository.findAllByUsername(username);
     }
 
     @GetMapping("/{userWhosFollowed}/follow")
+    @ResponseBody
     public Boolean getYapsForUsername(@PathVariable String userWhosFollowed, @RequestParam String userWhoFollows) {
        return followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
     }
 
     @PostMapping("/{userWhosFollowed}/follow")
+    @ResponseBody
     public Boolean follow(@PathVariable String userWhosFollowed, @RequestBody String userWhoFollows) {
         if(followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows)) {
             followsRepository.deleteByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
@@ -225,11 +251,13 @@ public class ControllerMain {
     }
 
     @GetMapping("/getUser/{username}")
+    @ResponseBody
     public User getUserForUsername(@PathVariable String username) {
         return userRepository.findByUsername(username);
     }
 
     @PostMapping("/getUsersOfYaps")
+    @ResponseBody
     public User[] getUsersOfYaps(@RequestBody Yap[] yaps) {
         long startTime = System.currentTimeMillis();
         System.out.println("s1");
@@ -245,21 +273,25 @@ public class ControllerMain {
     }
 
     @GetMapping("/getUserById/{userId}")
+    @ResponseBody
     public User getUserById(@PathVariable String userId) {
         return userRepository.getUserById(Long.parseLong(userId));
     }
 
     @GetMapping("/getUsersByUsernamePartial/{username}")
+    @ResponseBody
     public List<User> getUsersByUsernamePartial(@PathVariable String username) {
         return userRepository.findAllByUsernameContaining(username);
     }
 
     @GetMapping("/getUsersByUsernamePartial/")
+    @ResponseBody
     public List<User> getAllUsersByUsername() {
         return userRepository.findAll();
     }
 
     @GetMapping("/getTrends")
+    @ResponseBody
     public List<String> getTrends() {
         System.out.println("getting trends");
         Yap[] yaps = yapRepository.findAll().toArray(new Yap[0]);
@@ -271,6 +303,7 @@ public class ControllerMain {
     }
 
     @GetMapping("/getYapsOfTrend/{trend}")
+    @ResponseBody
     public List<Yap> getYapsOfTrend(@PathVariable String trend) {
         System.out.println("getting trend yaps");
         return yapRepository.findAll()
@@ -280,6 +313,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/changeBgColor/{userName}")
+    @ResponseBody
     public ResponseEntity changeBgColor(@PathVariable String userName, @RequestBody Long bgColor){
         User user = userRepository.findByUsername(userName);
         user.setBgColor(bgColor);
@@ -287,5 +321,30 @@ public class ControllerMain {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    // @MessageMapping("/greet")
+    // @SendTo("/topic/greetings")
+    // public static String greeting(String msg) {
+    //     return msg;
+    // }
+
+    @PostMapping("/dm")
+    @ResponseBody
+    public void postDM(@RequestBody DM dm) {
+        System.out.println("what");
+        dmRepository.save(dm);
+    }
+
+    @GetMapping("/dm")
+    @ResponseBody
+    public List<DM> getDMS(@RequestParam String user1, @RequestParam String user2) {
+         
+        List<DM> firstHalf = dmRepository.findAllBySenderAndReceiver(user1, user2);
+        List<DM> secondHalf = dmRepository.findAllBySenderAndReceiver(user2, user1);
+        firstHalf.addAll(secondHalf);
+
+        return firstHalf;
+    }
+    
+    
 
 }
