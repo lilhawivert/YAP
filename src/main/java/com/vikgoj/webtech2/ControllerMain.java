@@ -1,6 +1,6 @@
 package com.vikgoj.webtech2;
 
-
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,9 +25,9 @@ import com.vikgoj.webtech2.Repositories.LikeRepository;
 import com.vikgoj.webtech2.Repositories.UserRepository;
 import com.vikgoj.webtech2.Repositories.YapRepository;
 import com.vikgoj.webtech2.Repositories.BlockRepository;
+import com.vikgoj.webtech2.Repositories.ChatMessageRepository;
 
 import org.springframework.web.bind.annotation.RequestParam;
-
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
@@ -44,32 +44,37 @@ public class ControllerMain {
 
     @Autowired
     private LikeRepository likeRepository;
-    
+
     @Autowired
     private CommentLikeRepository commentLikeRepository;
-    
+
     @Autowired
     private FollowsRepository followsRepository;
 
     @Autowired
     private BlockRepository blockRepository;
 
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
 
     @PostMapping("/login")
     public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
         User userFromRepo = userRepository.findByUsername(user.getUsername());
-        if(userRepository.existsByUsername(userFromRepo.getUsername()) && userFromRepo.getPassword().equals(helper.encodeString(user.getPassword()))) return new ResponseEntity<>(HttpStatus.OK);
-        else return new ResponseEntity<>(HttpStatus.BAD_REQUEST); 
+        if (userRepository.existsByUsername(userFromRepo.getUsername())
+                && userFromRepo.getPassword().equals(helper.encodeString(user.getPassword())))
+            return new ResponseEntity<>(HttpStatus.OK);
+        else
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     @PostMapping("/register")
     public ResponseEntity postRegister(@RequestBody User user) {
-        if(!userRepository.existsByUsername(user.getUsername())) {
+        if (!userRepository.existsByUsername(user.getUsername())) {
             user.setPassword(helper.encodeString(user.getPassword()));
             userRepository.save(user);
             return new ResponseEntity<>(HttpStatus.OK);
-        }
-        else return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } else
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     @PostMapping("/yap")
@@ -80,7 +85,8 @@ public class ControllerMain {
 
     @PostMapping("/yaps")
     public List<Yap> getYaps(@RequestBody String username) {
-        List<String> followedUsernames = followsRepository.findAllByUserWhoFollows(username).stream().map(follow -> follow.getUserWhosFollowed()).toList();
+        List<String> followedUsernames = followsRepository.findAllByUserWhoFollows(username).stream()
+                .map(follow -> follow.getUserWhosFollowed()).toList();
         List<Yap> yaps = new ArrayList<Yap>();
         followedUsernames.forEach(followedUsername -> {
             yaps.addAll(yapRepository.findAllByUsername(followedUsername));
@@ -89,14 +95,16 @@ public class ControllerMain {
         Collections.reverse(yaps);
         return yaps.subList(0, Math.min(10, yaps.size()));
     }
-    
+
     @PostMapping("/yap/{id}")
     public Yap getYap(@PathVariable String id, @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         yap.setLiked(likeRepository.existsByUserThatLikedAndYapId(username, Long.parseLong(id)));
-        yap.getComments().stream().filter(comment -> commentLikeRepository.existsByUserThatLikedAndCommentId(username, comment.getId())).forEach(comment -> {
-            comment.setLiked(true);
-        });
+        yap.getComments().stream()
+                .filter(comment -> commentLikeRepository.existsByUserThatLikedAndCommentId(username, comment.getId()))
+                .forEach(comment -> {
+                    comment.setLiked(true);
+                });
         return yap;
     }
 
@@ -119,35 +127,34 @@ public class ControllerMain {
     public ResponseEntity likeYap(@PathVariable String id, @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         boolean liked = likeRepository.existsByUserThatLikedAndYapId(username, Long.parseLong(id));
-        if(liked) { 
-            yap.setLikes(yap.getLikes()-1);
+        if (liked) {
+            yap.setLikes(yap.getLikes() - 1);
             likeRepository.deleteByUserThatLikedAndYapId(username, yap.getId());
-        }
-        else if(!liked) { 
-            yap.setLikes(yap.getLikes()+1);
+        } else if (!liked) {
+            yap.setLikes(yap.getLikes() + 1);
             likeRepository.save(new Like(yap.getId(), username));
         }
         yapRepository.save(yap);
-        return new ResponseEntity<>(HttpStatus.OK); 
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PostMapping("/yap/{id}/comment/{commentId}")
-    public ResponseEntity likeComment(@PathVariable String id, @PathVariable String commentId, @RequestBody String username) {
+    public ResponseEntity likeComment(@PathVariable String id, @PathVariable String commentId,
+            @RequestBody String username) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
         Comment comment = commentRepository.findByYapAndId(yap, Long.parseLong(commentId));
         boolean liked = commentLikeRepository.existsByUserThatLikedAndCommentId(username, Long.parseLong(commentId));
-        if(liked) { 
-            comment.setLikes(comment.getLikes()-1);
+        if (liked) {
+            comment.setLikes(comment.getLikes() - 1);
             commentLikeRepository.deleteByUserThatLikedAndCommentId(username, Long.parseLong(commentId));
-        }
-        else if(!liked) { 
-            comment.setLikes(comment.getLikes()+1);
+        } else if (!liked) {
+            comment.setLikes(comment.getLikes() + 1);
             commentLikeRepository.save(new CommentLike(Long.parseLong(commentId), username));
         }
         // yapRepository.save(yap);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-    
+
     @DeleteMapping("/yap/{id}/comment/{commentId}")
     public ResponseEntity deleteComment(@PathVariable String id, @PathVariable String commentId) {
         Yap yap = yapRepository.findById(Long.parseLong(id)).get();
@@ -164,7 +171,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/changeProfilePicture/{userName}")
-    public ResponseEntity changeProfilePicture(@PathVariable String userName, @RequestBody String newPicture){
+    public ResponseEntity changeProfilePicture(@PathVariable String userName, @RequestBody String newPicture) {
         User user = userRepository.findByUsername(userName);
         user.setProfilePic(newPicture);
         userRepository.save(user);
@@ -172,7 +179,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/changeUserName/{userName}")
-    public ResponseEntity changeUserName(@PathVariable String userName, @RequestBody String newUsername){
+    public ResponseEntity changeUserName(@PathVariable String userName, @RequestBody String newUsername) {
         User user = userRepository.findByUsername(userName);
         user.setUsername(newUsername);
         userRepository.save(user);
@@ -180,7 +187,7 @@ public class ControllerMain {
     }
 
     @PostMapping("/changePassword/{userName}")
-    public ResponseEntity changePassword(@PathVariable String userName, @RequestBody String newPassword){
+    public ResponseEntity changePassword(@PathVariable String userName, @RequestBody String newPassword) {
         User user = userRepository.findByUsername(userName);
         user.setPassword(helper.encodeString(newPassword));
         userRepository.save(user);
@@ -197,44 +204,42 @@ public class ControllerMain {
 
     @GetMapping("/yaps/{username}")
     public List<Yap> getYapsForUsername(@PathVariable String username) {
-       return yapRepository.findAllByUsername(username);
+        return yapRepository.findAllByUsername(username);
     }
 
     @GetMapping("/{userWhosFollowed}/follow")
     public Boolean getYapsForUsername(@PathVariable String userWhosFollowed, @RequestParam String userWhoFollows) {
-       return followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
+        return followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
     }
 
     @PostMapping("/{userWhosFollowed}/follow")
     public Boolean follow(@PathVariable String userWhosFollowed, @RequestBody String userWhoFollows) {
-        if(followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows)) {
+        if (followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows)) {
             followsRepository.deleteByUserWhosFollowedAndUserWhoFollows(userWhosFollowed, userWhoFollows);
             return false;
-        }
-        else {
+        } else {
             followsRepository.save(new Follow(userWhosFollowed, userWhoFollows));
             return true;
         }
     }
 
     @PostMapping("/{userWhosBlocked}/block")
-    public Boolean block(@PathVariable String userWhoblocks,@RequestBody String userwhosblocked) {
-       if(blockRepository.existsByUserWhosBlockedAndUserWhoBlocks(userwhosblocked,userWhoblocks)) {
-           blockRepository.deleteByUserWhosBlockedAndUserWhoBlocks(userwhosblocked,userWhoblocks);
+    public Boolean block(@PathVariable String userWhoblocks, @RequestBody String userwhosblocked) {
+        if (blockRepository.existsByUserWhosBlockedAndUserWhoBlocks(userwhosblocked, userWhoblocks)) {
+            blockRepository.deleteByUserWhosBlockedAndUserWhoBlocks(userwhosblocked, userWhoblocks);
 
-           return false;
-       }else {
-           blockRepository.save(new Block(userwhosblocked,userWhoblocks));
-           if(followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhoblocks, userwhosblocked) && blockRepository.existsByUserWhosBlockedAndUserWhoBlocks(userWhoblocks,userwhosblocked)) {
-            followsRepository.deleteByUserWhosFollowedAndUserWhoFollows(userWhoblocks, userwhosblocked);
-           }
-           return true;
-           //unblock
-       }
-       
-      
+            return false;
+        } else {
+            blockRepository.save(new Block(userwhosblocked, userWhoblocks));
+            if (followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhoblocks, userwhosblocked)
+                    && blockRepository.existsByUserWhosBlockedAndUserWhoBlocks(userWhoblocks, userwhosblocked)) {
+                followsRepository.deleteByUserWhosFollowedAndUserWhoFollows(userWhoblocks, userwhosblocked);
+            }
+            return true;
+            // unblock
+        }
+
     }
-
 
     @GetMapping("/getUser/{username}")
     public User getUserForUsername(@PathVariable String username) {
@@ -268,7 +273,7 @@ public class ControllerMain {
     @GetMapping("/getTrends")
     public List<String> getTrends() {
         System.out.println("getting trends");
-        Yap[] yaps = yapRepository.findAll().toArray(new Yap[0]); //TODO add date since when
+        Yap[] yaps = yapRepository.findAll().toArray(new Yap[0]); // TODO add date since when
         ArrayList<String> ret = new ArrayList<>();
         for (Yap yap : yaps) {
             ret.addAll(helper.extractHashtags(yap.getMessage()));
@@ -285,5 +290,11 @@ public class ControllerMain {
                 .collect(Collectors.toList());
     }
 
+    @PostMapping("/chat/sendMessage")
+    public ResponseEntity sendMessage(@RequestBody ChatMessage chatMessage) {
+        chatMessage.settimestamp(LocalDateTime.now()); // Set current timestamp
+        chatMessageRepository.save(chatMessage); // Save chat message to the database
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
 }
