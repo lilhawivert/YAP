@@ -56,16 +56,21 @@ public class ControllerMain {
     }
 
     @PostMapping("/login")
-    public ResponseEntity postLogin(@RequestBody User user) throws LoginException {
+    public User postLogin(@RequestBody User user) throws LoginException {
+        if(!userRepository.existsByUsername(user.getUsername())) throw new LoginException(); 
         User userFromRepo = userRepository.findByUsername(user.getUsername());
-        if(userRepository.existsByUsername(userFromRepo.getUsername()) && userFromRepo.getPassword().equals(helper.encodeString(user.getPassword()))) return new ResponseEntity<>(HttpStatus.OK);
-        else return new ResponseEntity<>(HttpStatus.BAD_REQUEST); 
+        if(userFromRepo.getPassword().equals(helper.encodeString(user.getPassword()))) {
+            user = userRepository.findByUsername(user.getUsername());
+            return user;
+        }
+        else throw new LoginException(); 
     }
 
     @PostMapping("/register")
     public ResponseEntity postRegister(@RequestBody User user) {
         if(!userRepository.existsByUsername(user.getUsername())) {
             user.setPassword(helper.encodeString(user.getPassword()));
+            followsRepository.save(new Follow(user.getUsername(), user.getUsername()));
             userRepository.save(user);
             return new ResponseEntity<>(HttpStatus.OK);
         }

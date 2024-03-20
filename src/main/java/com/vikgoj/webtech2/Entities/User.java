@@ -13,7 +13,7 @@ public class User {
     @Column
     private String password;
     @Column(length = 64000)
-    private String profilePics;
+    private String profilePic;
     @Column
     private Long bgColor;
     
@@ -21,7 +21,7 @@ public class User {
         this.id = id;
         this.username = username;
         this.password = password;
-        this.profilePics = profilePic;
+        this.profilePic = profilePic;
         this.bgColor = bgColor;
     }
 
@@ -47,10 +47,10 @@ public class User {
     }
 
     public String getProfilePic() {
-        return profilePics;
+        return profilePic;
     }
     public void setProfilePic(String profilePic) {
-        this.profilePics = profilePic;
+        this.profilePic = profilePic;
     }
 
     public Long getBgColor() {
