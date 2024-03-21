@@ -343,11 +343,8 @@ public class ControllerMain {
     @PostMapping("/dms")
     @ResponseBody
     public List<Chat> getDMsForUser(@RequestBody String username) {
-        System.out.println(username);
         List<DM> firstHalf = dmRepository.findAllByReceiver(username);
         List<DM> secondHalf = dmRepository.findAllBySender(username);
-        // System.out.println(firstHalf.size());
-        // System.out.println(secondHalf.size());
         firstHalf.addAll(secondHalf);
         Collections.sort(firstHalf, Comparator.reverseOrder());
 
@@ -355,10 +352,6 @@ public class ControllerMain {
         List<Chat> erg = new ArrayList<Chat>();
 
         for (DM dm : firstHalf) {
-            System.out.println("-------------");
-            System.out.println(dm.getReceiver());
-            System.out.println(dm.getSender() + " : " + dm.getMessage());
-            System.out.println("---------------");
             User receiver = userRepository.findByUsername(dm.getReceiver());
             User sender = userRepository.findByUsername(dm.getSender());
             if((!dm.getReceiver().equals(username) && !erg.stream().anyMatch(x -> x.getUser() == receiver)) ||(!dm.getSender().equals(username) && !erg.stream().anyMatch(x -> x.getUser() == sender))) {
