@@ -59,6 +59,7 @@ public class ControllerMain {
     private DMRepository dmRepository;
 
     @GetMapping("/health")
+    @ResponseBody
     public String getHealth() {
         return "OK";
     }
@@ -321,12 +322,6 @@ public class ControllerMain {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    // @MessageMapping("/greet")
-    // @SendTo("/topic/greetings")
-    // public static String greeting(String msg) {
-    //     return msg;
-    // }
-
     @PostMapping("/dm")
     @ResponseBody
     public void postDM(@RequestBody DM dm) {
@@ -337,7 +332,7 @@ public class ControllerMain {
     @GetMapping("/dm")
     @ResponseBody
     public List<DM> getDMS(@RequestParam String user1, @RequestParam String user2) {
-         
+        
         List<DM> firstHalf = dmRepository.findAllBySenderAndReceiver(user1, user2);
         List<DM> secondHalf = dmRepository.findAllBySenderAndReceiver(user2, user1);
         firstHalf.addAll(secondHalf);
@@ -345,6 +340,35 @@ public class ControllerMain {
         return firstHalf;
     }
     
+    @PostMapping("/dms")
+    @ResponseBody
+    public List<Chat> getDMsForUser(@RequestBody String username) {
+        System.out.println(username);
+        List<DM> firstHalf = dmRepository.findAllByReceiver(username);
+        List<DM> secondHalf = dmRepository.findAllBySender(username);
+        // System.out.println(firstHalf.size());
+        // System.out.println(secondHalf.size());
+        firstHalf.addAll(secondHalf);
+        Collections.sort(firstHalf, Comparator.reverseOrder());
+
+
+        List<Chat> erg = new ArrayList<Chat>();
+
+        for (DM dm : firstHalf) {
+            System.out.println("-------------");
+            System.out.println(dm.getReceiver());
+            System.out.println(dm.getSender() + " : " + dm.getMessage());
+            System.out.println("---------------");
+            User receiver = userRepository.findByUsername(dm.getReceiver());
+            User sender = userRepository.findByUsername(dm.getSender());
+            if((!dm.getReceiver().equals(username) && !erg.stream().anyMatch(x -> x.getUser() == receiver)) ||(!dm.getSender().equals(username) && !erg.stream().anyMatch(x -> x.getUser() == sender))) {
+                erg.add(new Chat((!dm.getReceiver().equals(username) ? receiver : sender), dm.getMessage()));
+            } 
+        }
+
+        return erg;
+
+    }
     
 
 }
