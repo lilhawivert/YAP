@@ -341,7 +341,7 @@ public class ControllerMain {
         List<DM> firstHalf = dmRepository.findAllBySenderAndReceiver(user1, user2);
         List<DM> secondHalf = dmRepository.findAllBySenderAndReceiver(user2, user1);
         firstHalf.addAll(secondHalf);
-
+        Collections.sort(firstHalf);
         return firstHalf;
     }
     
