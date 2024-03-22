@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vikgoj.webtech2.Exceptions.LoginException;
+import com.vikgoj.webtech2.Repositories.BlockRepository;
 import com.vikgoj.webtech2.Repositories.CommentLikeRepository;
 import com.vikgoj.webtech2.Repositories.CommentRepository;
 import com.vikgoj.webtech2.Repositories.DMRepository;
@@ -57,6 +58,9 @@ public class ControllerMain {
     
     @Autowired
     private DMRepository dmRepository;
+
+    @Autowired
+    private BlockRepository blockRepository;
 
     @GetMapping("/health")
     @ResponseBody
@@ -261,15 +265,15 @@ public class ControllerMain {
     @ResponseBody
     public User[] getUsersOfYaps(@RequestBody Yap[] yaps) {
         long startTime = System.currentTimeMillis();
-        System.out.println("s1");
+        // System.out.println("s1");
         User[] users = new User[yaps.length];
         for (int i = 0; i < users.length; i++) {
             users[i] = userRepository.findByUsername(yaps[i].getUsername());
         }
         long stopTime = System.currentTimeMillis();
         long elapsedTime = (stopTime - startTime) ;
-        System.out.println("s2");
-        System.out.println("Vergangene Zeit: " + elapsedTime + " 2");
+        // System.out.println("s2");
+        // System.out.println("Vergangene Zeit: " + elapsedTime + " 2");
         return users;
     }
 
@@ -347,10 +351,10 @@ public class ControllerMain {
         List<DM> secondHalf = dmRepository.findAllBySender(username);
         firstHalf.addAll(secondHalf);
         Collections.sort(firstHalf, Comparator.reverseOrder());
-
-
+        
+        
         List<Chat> erg = new ArrayList<Chat>();
-
+        
         for (DM dm : firstHalf) {
             User receiver = userRepository.findByUsername(dm.getReceiver());
             User sender = userRepository.findByUsername(dm.getSender());
@@ -358,9 +362,38 @@ public class ControllerMain {
                 erg.add(new Chat((!dm.getReceiver().equals(username) ? receiver : sender), dm.getMessage()));
             } 
         }
-
+        
         return erg;
+        
+    }
+    
+    @PostMapping("/{userWhosBlocked}/block") 
+    @ResponseBody
+    public Boolean block(@PathVariable String userWhosBlocked, @RequestBody String userWhoBlocks) {
+        // System.out.println(userWhoBlocks);
+        // System.out.println(userWhosBlocked);
+        if (blockRepository.existsByUserWhosBlockedAndUserWhoBlocks(userWhosBlocked, userWhoBlocks)) {
+            blockRepository.deleteByUserWhosBlockedAndUserWhoBlocks(userWhosBlocked, userWhoBlocks);
 
+            return false;
+        } else {
+            // System.out.println("here");
+            blockRepository.save(new Block(userWhosBlocked, userWhoBlocks));
+            // System.out.println(followsRepository.existsByUserWhosFollowedAndUserWhoFollows("", userWhosBlocked));
+            if (followsRepository.existsByUserWhosFollowedAndUserWhoFollows(userWhosBlocked, userWhoBlocks)) {
+                System.out.println("!!!!!!!!!");
+                followsRepository.deleteByUserWhosFollowedAndUserWhoFollows(userWhosBlocked, userWhoBlocks);
+            }
+            return true;
+            // unblock
+        }
+
+    }
+
+    @GetMapping("/{userWhosBlocked}/block")
+    @ResponseBody
+    public Boolean isUserBlocked(@PathVariable String userWhosBlocked, @RequestParam String userWhoBlocks) {
+       return blockRepository.existsByUserWhosBlockedAndUserWhoBlocks(userWhosBlocked, userWhoBlocks);
     }
     
 
